@@ -51,11 +51,29 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build and push Docker image
+      - name: Create docker tag based on matrix build
+        id: docker_tag
+        run: echo "tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.gcc_version }}" >> $GITHUB_OUTPUT
+
+      - name: Build docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          load: true
+          build-args: GCC_FOLDER=${{ steps.fetch_gcc.outputs.gcc_folder }}
+          tags: ${{ steps.docker_tag.outputs.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Test gcc output
+        run: |
+          docker run --rm ${{ steps.docker_tag.outputs.tag }} arm-none-eabi-gcc -v
+
+      - name: Push docker image
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
           build-args: GCC_FOLDER=${{ steps.fetch_gcc.outputs.gcc_folder }}
-          tags: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.gcc_version }}"
+          tags: ${{ steps.docker_tag.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
+      
