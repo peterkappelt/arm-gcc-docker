@@ -14,3 +14,6 @@ COPY "./$GCC_FOLDER" "/compiler/$GCC_FOLDER"
 RUN bash -c "chmod +x /compiler/$GCC_FOLDER/bin/*"
 
 ENV PATH "/compiler/$GCC_FOLDER/bin:$PATH"
+
+RUN mkdir /work
+WORKDIR /work
