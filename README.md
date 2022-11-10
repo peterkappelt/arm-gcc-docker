@@ -14,6 +14,13 @@ docker run \
   make
 ```
 
+## Included packages
+
+The docker containers include:
+ - the full `arm-gcc-none-eabi` suite
+ - make
+ - cmake
+
 ## Supported versions
 
 Currently, containers for the following versions are available: 
