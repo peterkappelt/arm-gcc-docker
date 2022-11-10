@@ -1,0 +1,61 @@
+name: Create and publish the container
+
+on:
+  - push
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    strategy:
+      matrix:
+        gcc_version:
+          - 8-2018-q4-major
+          - 9-2019-q4-major
+          - 10-2020-q4-major
+          - 10.3-2021.10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - run: pip install requests
+
+      - name: Fetch ARM GCC ${{ matrix.gcc_version }}
+        id: fetch_gcc
+        run: >-
+          echo "gcc_folder=$(
+            python fetch-armgcc.py ${{ matrix.gcc_version }}
+          )" >> $GITHUB_OUTPUT
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          build-args: GCC_FOLDER=${{ steps.fetch_gcc.outputs.gcc_folder }}
+          tags: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.gcc_version }}"
+          labels: ${{ steps.meta.outputs.labels }}
