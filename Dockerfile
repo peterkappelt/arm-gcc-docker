@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-ARG GCC_FOLDER
+ARG GCC_FOLDER TARGETARCH
 RUN test -n "$GCC_FOLDER" || (echo "GCC_FOLDER  not set" && false)
 
 RUN apk update
@@ -10,7 +10,7 @@ RUN apk add build-base wget cmake
 RUN apk add gcompat 
 
 RUN mkdir /compiler
-COPY "./$GCC_FOLDER" "/compiler/$GCC_FOLDER"
+COPY "./gcc_$TARGETARCH/$GCC_FOLDER" "/compiler/$GCC_FOLDER"
 
 RUN bash -c "chmod +x /compiler/$GCC_FOLDER/bin/*"
 

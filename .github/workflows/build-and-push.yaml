@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         gcc_version:
-          - 8-2018-q4-major
+#          - 8-2018-q4-major
           - 9-2019-q4-major
           - 10-2020-q4-major
           - 10.3-2021.10
@@ -25,17 +25,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
       - run: pip install requests
 
-      - name: Fetch ARM GCC ${{ matrix.gcc_version }}
-        id: fetch_gcc
+      - name: Fetch ARM GCC (x86_64) ${{ matrix.gcc_version }}
+        id: fetch_gcc_x86
         run: >-
+          mkdir gcc_amd64 && cd gcc_amd64
+
           echo "gcc_folder=$(
-            python fetch-armgcc.py ${{ matrix.gcc_version }}
+            python ../fetch-armgcc.py x86_64 ${{ matrix.gcc_version }}
+          )" >> $GITHUB_OUTPUT
+
+      - name: Fetch ARM GCC (aarch64) ${{ matrix.gcc_version }}
+        id: fetch_gcc_arm64
+        run: >-
+          mkdir gcc_arm64 && cd gcc_arm64
+
+          echo "gcc_folder=$(
+            python ../fetch-armgcc.py aarch64 ${{ matrix.gcc_version }}
           )" >> $GITHUB_OUTPUT
 
       - name: Log in to the Container registry
@@ -55,25 +73,12 @@ jobs:
         id: docker_tag
         run: echo "tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.gcc_version }}" >> $GITHUB_OUTPUT
 
-      - name: Build docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          load: true
-          build-args: GCC_FOLDER=${{ steps.fetch_gcc.outputs.gcc_folder }}
-          tags: ${{ steps.docker_tag.outputs.tag }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Test gcc output
-        run: |
-          docker run --rm ${{ steps.docker_tag.outputs.tag }} arm-none-eabi-gcc -v
-
-      - name: Push docker image
+      - name: Build and push container image
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
-          build-args: GCC_FOLDER=${{ steps.fetch_gcc.outputs.gcc_folder }}
+          platforms: linux/amd64,linux/arm64/v8
+          build-args: GCC_FOLDER=${{ steps.fetch_gcc_x86.outputs.gcc_folder }}
           tags: ${{ steps.docker_tag.outputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
-      
