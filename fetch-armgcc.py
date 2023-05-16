@@ -28,7 +28,8 @@ parser = ArgumentParser(
 )
 parser.add_argument(
     "ARCH",
-    help="Host architecture to fetch for. One of " + ", ".join(gcc_versions.keys()),
+    help="Host architecture to fetch for. One of " +
+    ", ".join(gcc_versions.keys()),
 )
 parser.add_argument(
     "GCC_VERSION",
@@ -45,12 +46,22 @@ if __name__ == "__main__":
         print("Unknown arch!")
         exit(1)
 
+    # workaround: this specific combination is not available, create a dummy for the build to still succeed
+    if requested_arch == "aarch64" and requested_gcc_version == "8-2018-q4-major":
+        os.mkdir("./gcc-arm-none-eabi-8-2018-q4-major")
+        os.mkdir("./gcc-arm-none-eabi-8-2018-q4-major/bin")
+        with open("./gcc-arm-none-eabi-8-2018-q4-major/bin/README", "w") as f:
+            f.write("this combination is not available!")
+        print("gcc-arm-none-eabi-8-2018-q4-major")
+        exit(0)
+
     if not requested_gcc_version in gcc_versions[requested_arch].keys():
         print("Unknown gcc version!")
         exit(1)
 
     with TemporaryDirectory() as tmp_dl, TemporaryDirectory() as tmp_tar:
-        res = requests.get(gcc_versions[requested_arch][requested_gcc_version], stream=True)
+        res = requests.get(
+            gcc_versions[requested_arch][requested_gcc_version], stream=True)
         with open(f"{tmp_dl}/{requested_gcc_version}.tar.bz2", "wb") as fd:
             for chunk in res.iter_content(chunk_size=8192):
                 fd.write(chunk)
