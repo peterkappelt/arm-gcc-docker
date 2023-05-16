@@ -1,13 +1,10 @@
-FROM alpine:latest
+FROM debian:bookworm-slim
 
 ARG GCC_FOLDER TARGETARCH
 RUN test -n "$GCC_FOLDER" || (echo "GCC_FOLDER  not set" && false)
 
-RUN apk update
-RUN apk add bash
-RUN apk add build-base wget cmake
-#gcompat is required for libc compatibility
-RUN apk add gcompat 
+RUN apt update
+RUN apt install -y --no-install-recommends bash build-essential wget cmake
 
 RUN mkdir /compiler
 COPY "./gcc_$TARGETARCH/$GCC_FOLDER" "/compiler/$GCC_FOLDER"
