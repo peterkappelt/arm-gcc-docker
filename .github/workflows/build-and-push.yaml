@@ -17,6 +17,7 @@ jobs:
           - 10-2020-q4-major
           - 10.3-2021.10
           - 12.3.rel1
+          - 13.3.rel1
     runs-on: ubuntu-latest
     permissions:
       contents: read
