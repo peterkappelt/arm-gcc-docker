@@ -7,7 +7,7 @@ RUN apt update
 RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends build-essential wget libncursesw5 zlib1g-dev ca-certificates
 RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends cmake ninja-build
 RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends git-core
-RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends bash zsh
+RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends bash zsh sudo
 
 RUN mkdir /compiler
 COPY "./gcc_$TARGETARCH/$GCC_FOLDER" "/compiler/$GCC_FOLDER"
